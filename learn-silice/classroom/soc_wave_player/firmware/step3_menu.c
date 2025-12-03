@@ -7,6 +7,8 @@
 #include "oled.h"
 #include "display.h"
 #include "printf.h"
+#include "sdcard.h"
+
 
 #define N_ITEMS 5
 
