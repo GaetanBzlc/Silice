@@ -33,21 +33,15 @@ group mem_io
 // Audio output unit
 // --------------------------------------------------
 
-unit pwm(input uint8 audio8, output uint1 audio_bit)
-{
-  uint8 counter = 0;
-  always {
-    audio_bit = counter < audio8;
-    counter   = counter + 1;
-  }
-}
-
 unit audio(input  uint8 audio_in,output uint4 audio_out)
 {
-  pwm pw;
+  uint8 counter = 0;
+  uint4 low     = 0;
+  uint4 high    = 15;
   always {
-    pw.audio8 = audio_in;                 // feed current sample into PWM
-    audio_out = {4{pw.audio_bit}};        // expand 1-bit PWM to 4-bit DAC input
+    uint8 frac  = audio_in;
+    audio_out   = counter < frac ? high : low;
+    counter     = counter + 1;
   }
 }
 
@@ -95,6 +89,12 @@ $$end
     oled_clk        :> oled_clk,
     oled_dc         :> oled_dc,
   );
+  // allocate a BRAM for the display pixels
+  simple_dualport_bram uint8 frame_buffer[$128*128$] = uninitialized;
+  uint1  fb_enabled  = 0;
+  uint14 fb_pixcount = 0;
+  uint3  fb_channel  = 3b010;
+  uint33 fb_wait     = 1;
 
 $$if not SDCARD then
   // for simulation ('fake' inputs/outputs)
@@ -163,6 +163,20 @@ $$end
             : (audio_buffer_sample+1) // go to next sample
           );
     audio_counter       = (audio_counter == $PERIOD$) ? 0 : (audio_counter+1);
+    // ---- hardware display buffer
+    frame_buffer.wenable1   = 0;
+    display.enable          = fb_enabled & fb_wait[0,1];
+    display.data_or_command = 1;
+    display.byte            = frame_buffer.rdata0;
+    frame_buffer.addr0      = fb_pixcount;
+    fb_channel              = (fb_enabled & fb_wait[0,1])
+                                           ? {fb_channel[0,2],fb_channel[2,1]}
+                                           : fb_channel;
+    fb_wait                 = (fb_enabled) ? {fb_wait[0,32],fb_wait[32,1]}
+                                           : fb_wait;
+    fb_pixcount             = (fb_enabled & fb_wait[0,1] & fb_channel[0,1])
+                                           ? fb_pixcount + 1
+                                           : fb_pixcount;
     // ---- check whether the CPU read from or wrote to a peripheral address
     uint1 peripheral   =  prev_mem_addr[$periph_bit$,1];
     uint1 peripheral_r =  peripheral & (prev_mem_rw == 4b0); // reading periph.
@@ -173,6 +187,7 @@ $$end
     uint1 display_reset_access   = prev_mem_addr[ 2,1];
     uint1 sd_access              = prev_mem_addr[ 5,1];
     uint1 button_access          = prev_mem_addr[ 6,1];
+    uint1 framebuffer_access     = prev_mem_addr[$periph_bit-2$,1];
 	  // ---- memory access CPU <-> BRAM (reads and writes)
     // reads  RAM, peripherals => CPU
     memio.rdata   = // read data is either from memory or SOC peripherals
@@ -190,6 +205,7 @@ $$end
     ram.addr         = memio.addr;
     // writes CPU => peripherals
     if (peripheral_w & ~audio_access
+     & ~framebuffer_access
                                     ) {
       /// LEDs
       leds           = leds_access ? prev_wdata[0,8] : leds;
@@ -229,6 +245,12 @@ $$end
                             | {prev_mem_addr[0,7],2b0}//addr from CPU (32bits)
                             | which; // sample address
       audio_buffer.wenable1 = audio_access; // write sample
+      // ---- display
+      frame_buffer.wenable1 = framebuffer_access;
+      fb_enabled            = fb_enabled | framebuffer_access;
+      frame_buffer.addr1    = {prev_mem_addr[0,12],which}; //addr from CPU (32bits)
+      uint8 clr = prev_wdata[{which,3b000},8]; // get 8 bit channel value
+      frame_buffer.wdata1   = {2b00,clr[2,6]}; // remap to 6 bits per channel
     }
 
     // record current access for next cycle memory mapping checks

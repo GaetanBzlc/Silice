@@ -1,0 +1,1 @@
+void Select_and_play_Song(char * Album, int *back);

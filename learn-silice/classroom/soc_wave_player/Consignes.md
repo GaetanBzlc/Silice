@@ -29,3 +29,6 @@
 - volume sur LEDs (lors du changement avec boutons)
 - easter egg
 - tout autre fonctionnalité, soyez créatifs!
+
+# Mes idées :
+ - Avec un peu de motivation on pourrait afficher les fréquences en barchart
