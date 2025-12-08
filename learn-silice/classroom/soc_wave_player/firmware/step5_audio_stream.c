@@ -29,7 +29,7 @@ void main()
       while(1){
         audio_menu(Album,back);
         if (*back){*back = 0; break;}
-        Select_and_play_Song(Album,back);
+        Select_and_play_Song(Album);
         if (*back){*back = 0; break;}
       }
     }

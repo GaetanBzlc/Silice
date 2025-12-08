@@ -5,7 +5,7 @@ CC   = $(ARCH)-gcc
 AS   = $(ARCH)-as
 LD   = $(ARCH)-ld
 SRCS := $(wildcard src/*.c src/audio_part/*.c src/game_part/*.c)
-OBJS = sdcard.o div.o std.o config.o oled.o display.o printf.o mul.o crt0.o fat_io_lib.o src/*.o \
+OBJS = sdcard.o div.o std.o config.o oled.o display.o printf.o mul.o crt0.o fat_io_lib.o \
 	   $(SRCS:.c=.o)
 
 $(PRGS): %: %.o $(OBJS)
@@ -20,4 +20,4 @@ $(PRGS): %: %.o $(OBJS)
 		$(AS) -march=rv32i -mabi=ilp32 $< -o $@
 
 clean:
-	rm -f *.o *.hex *.elf
+	rm -f *.o *.hex *.elf src/*.o src/audio_part/*.o src/game_part/*.o

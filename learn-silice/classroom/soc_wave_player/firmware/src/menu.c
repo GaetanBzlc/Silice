@@ -10,7 +10,7 @@
 
 int const NbMenu = 2;
 static const char *Menu[] = { "Music", "Games" };
-
+int Init_stat = 0;
 
 int Init_menu(){
   // install putchar handler for printf
@@ -26,21 +26,26 @@ int Init_menu(){
   display_set_front_back_color(255,0);
   printf("init ... ");
   display_refresh();
-
-  // init sdcard
-  sdcard_init();
-  // initialise File IO Library
-  fl_init();
-  // attach media access functions to library
-  while (fl_attach_media(sdcard_readsector, sdcard_writesector) != FAT_INIT_OK) {
-    // try again, we need this
+  if(!Init_stat){
+    Init_stat = 1;
+    // init sdcard
+    sdcard_init();
+    // initialise File IO Library
+    fl_init();
+    display_refresh();
+    // attach media access functions to library
+    while (fl_attach_media(sdcard_readsector, sdcard_writesector) != FAT_INIT_OK) {
+      // try again, we need this
+    }
   }
+  
   printf("done.\n");
   display_refresh();
 
   int pulse = 0;
   int selected = 0;
   while (1) {
+    clear_audio();
     display_set_cursor(0,0);
     display_set_front_back_color((pulse+127)&255, pulse);
     pulse += 7;

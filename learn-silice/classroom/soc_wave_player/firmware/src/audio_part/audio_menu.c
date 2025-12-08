@@ -14,6 +14,7 @@
 char Albums[MAX_ALBUMS][MAX_STR_ALBUM];
 int sizes[MAX_ALBUMS];
 int nAlbums;
+int init = 0;
 
 
 // recursive listing of /song and subdirectories, bounded by MAX_ALBUMS
@@ -56,19 +57,22 @@ void clear_audio()
 
 void audio_menu(char * Album,int *back){
 
-    display_set_cursor(0,0);
-    display_set_front_back_color(255,0);
-    printf("audio_part init ... ");
-    display_refresh();
-    nAlbums = 0;
-    list_Albums("/song");
+    if (init == 0){
+      init = 1;
+      display_set_cursor(0,0);
+      display_set_front_back_color(255,0);
+      printf("audio_part init ... ");
+      display_refresh();
+      nAlbums = 0;
+      list_Albums("/song");
 
-    if (nAlbums == 0) {
-        display_set_cursor(0,0);
-        display_set_front_back_color(255,0);
-        printf("No files found in /song.\n");
-        display_refresh();
-        while (1) { }
+      if (nAlbums == 0) {
+          display_set_cursor(0,0);
+          display_set_front_back_color(255,0);
+          printf("No files found in /song.\n");
+          display_refresh();
+          while (1) { }
+      }
     }
 
     // selection menu (btn3: down, btn4: up, btn2: play)
@@ -101,6 +105,8 @@ void audio_menu(char * Album,int *back){
         if (*BUTTONS & (1<<6)) {
           strncpy(Album, Albums[selected], MAX_STR_ALBUM - 1);
           Album[MAX_STR_ALBUM - 1] = '\0';
+          memset(display_framebuffer(),0x00,128*128);
+          display_refresh();
           break;
         
         }
