@@ -64,48 +64,91 @@ void music_play(int selected,char * Album_Path){
             printf("playing "); printf(Songs[selected]); printf("\n");
             display_refresh();
             clear_audio();
-            int leds = 1;
-            int dir  = 0;
-            // plays the entire file
-            int stop = 0;
+            int leds = 0;
+            
+
+            int paused = 0;
+            int prev_buttons = 0;
             int speed_shift = 0;
             const int size = 512;
             uint8_t tmp[512<<2];
-            
+            int start = f->bytenum;
             while (1) {
                 
-                // le boutton 5 permet de mettre le son en pause
-                if (*BUTTONS & (1<<5)){stop = !stop;}
-                if (stop) { clear_audio(); break; }
+                int buttons = *BUTTONS;
+                
+                // le bouton 5 permet de mettre le son en pause (toggle sur front montant)
+                if ((buttons & (1<<5)) && !(prev_buttons & (1<<5))) {
+                  paused = !paused;
+                  if (paused) { clear_audio(); }
+                }
+                if (paused) { prev_buttons = buttons; continue; }
 
 
-                if (*BUTTONS & (1<<3)) { if (speed_shift < 2) { speed_shift++; } }
-                else if (*BUTTONS & (1<<4)) { if (speed_shift > 0) { speed_shift--; } }
+                if (buttons & (1<<3)) { if (speed_shift < 2) { speed_shift++; } }
+                
+                
+                else if (buttons & (1<<4)) { if (speed_shift > -2) { speed_shift--; } }
                 
         
                 uint8_t *addr = (uint8_t*)(*AUDIO);
 
         
                 // (use 512 bytes reads to avoid extra copies inside fat_io_lib)
-                int size_buf = size << speed_shift;
+                int size_buf = (speed_shift >= 0) ? (size << speed_shift)
+                                  : (size >> -speed_shift);
+
+                //si la vitesse est négative on fair reculer le pointeur de fichier
+                if (speed_shift < 0) {
+                  uint32_t back = size >> -speed_shift; // ou la quantité que tu veux
+                  back = back << 4;
+                  if (f->bytenum > back) f->bytenum -= back;
+                  else f->bytenum = start; // reste collé au début
+                } 
+
+
                 int sz = fl_fread(tmp,1,size_buf,f);
                 
                 if (sz < size_buf) break; // reached end of file
                 
-                int step = 1 << speed_shift;
-                for (int o = 0, i = 0; o < 512; ++o, i += step) {
+                int step     = 1 << (speed_shift >= 0 ? speed_shift : -speed_shift);
+                
+                if(speed_shift >= 0 ){
+                  for (int o = 0, i = 0; o < 512; ++o, i += step) {
                     addr[o] = tmp[i];
+                  }
                 }
+                else{
+                  // Play backwards: repeat each sample 'step' times in reverse order to fill the 512-byte audio window.
+                  const int repeat = step;
+                  for (int o = 0; o < 512; ++o) {
+                    int idx = size_buf - 1 - (o / repeat);
+                    if (idx < 0) { idx = 0; }
+                    addr[o] = tmp[idx];
+                  }
+                }
+                
                 
                 while (addr == (uint8_t*)(*AUDIO)) { }
                 // light show!
-                if (leds == 128 || leds == 1) { dir = 1-dir; }
-                if (dir) {
-                    leds = leds << 1;
-                } else {
-                    leds = leds >> 1;
+                if(speed_shift == -2){
+                  leds = 1;
                 }
+                else if(speed_shift == -1){
+                  leds = 1<< 2;
+                }
+                else if(speed_shift == 0){
+                  leds = 1<< 4;
+                }
+                else if(speed_shift ==1 ){
+                  leds = 1<< 6;
+                }
+                else {
+                  leds = 511;
+                }
+
                 *LEDS = leds;
+                prev_buttons = buttons;
             }
             // close
             fl_fclose(f);

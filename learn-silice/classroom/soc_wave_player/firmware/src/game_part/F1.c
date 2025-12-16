@@ -14,7 +14,11 @@ int center_x;
 const int center_y = 64;
 const int r = 9;
 const int reaction_button_mask = 1<<6;
-const unsigned int CPU_FREQ_HZ = 50000000;
+
+
+const unsigned int CPU_FREQ_HZ = 25000000;
+//il faut utiliser rdcycle
+
 int space; 
 unsigned int timer;
 

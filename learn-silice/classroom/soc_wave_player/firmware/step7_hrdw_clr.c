@@ -12,7 +12,7 @@
 #error This firmware needs HWFBUFFER defined
 #endif
 
-void main()
+int main()
 {
   // install putchar handler for printf
   f_putchar = display_putchar;
@@ -32,5 +32,7 @@ void main()
       }
     }
     which = (which+1)%3;
+    
   }
+  return 0;
 }

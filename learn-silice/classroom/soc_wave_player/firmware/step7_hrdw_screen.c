@@ -8,9 +8,9 @@
 #include "display.h"
 #include "printf.h"
 
-#ifndef HWFBUFFER
-#error This firmware needs HWFBUFFER defined
-#endif
+//#ifndef HWFBUFFER
+//#error This firmware needs HWFBUFFER defined
+//#endif
 
 void main()
 {
