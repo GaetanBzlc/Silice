@@ -5,8 +5,7 @@
 #include "../../printf.h"
 
 #include "../../fat_io_lib/src/fat_filelib.h"
-
-
+#include "../tools/Album_struct.h"
 
 #define MAX_ALBUMS 8
 #define MAX_PATH 64
@@ -15,7 +14,6 @@ char Albums[MAX_ALBUMS][MAX_STR_ALBUM];
 int sizes[MAX_ALBUMS];
 int nAlbums;
 int init = 0;
-
 
 // recursive listing of /song and subdirectories, bounded by MAX_ALBUMS
 static void list_Albums(const char *path) {
@@ -56,6 +54,7 @@ void clear_audio()
 }
 
 void audio_menu(char * Album,int *back){
+    *back = 0;
 
     if (init == 0){
       init = 1;
@@ -81,8 +80,8 @@ void audio_menu(char * Album,int *back){
     while (1) {
         display_set_cursor(0,0);
         display_set_front_back_color((pulse+127)&255, pulse);
-        pulse += 7;
-        printf("   == Albums (/Albums) ==   \n\n");
+        pulse += 1;
+        printf("  == Albums (/Albums) ==  \n\n");
         for (int i = 0; i < nAlbums; ++i) {
         display_set_front_back_color(i==selected ? 0 : 255, i==selected ? 255 : 0);
         printf("%d> %s\n", i, Albums[i]);
@@ -91,15 +90,18 @@ void audio_menu(char * Album,int *back){
 
         if (*BUTTONS & (1<<4)) {
         ++selected;
+        while (*BUTTONS & (1<<4)) {} // Attendre le relâchement
         }
         if (*BUTTONS & (1<<3)) {
         --selected;
+        while (*BUTTONS & (1<<3)) {} // Attendre le relâchement
         }
         if (selected < 0) selected = nAlbums - 1;
         if (selected >= nAlbums) selected = 0;
         
         if (*BUTTONS & (1<<5)) {
           *back = 1;
+          while (*BUTTONS & (1<<5)) {} // Attendre le relâchement
           break;
         }
         if (*BUTTONS & (1<<6)) {
@@ -107,6 +109,7 @@ void audio_menu(char * Album,int *back){
           Album[MAX_STR_ALBUM - 1] = '\0';
           memset(display_framebuffer(),0x00,128*128);
           display_refresh();
+          while (*BUTTONS & (1<<6)) {}
           break;
         
         }

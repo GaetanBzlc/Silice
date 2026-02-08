@@ -17,7 +17,7 @@ void Game_menu (){
     while (1) {
         display_set_cursor(0,0);
         display_set_front_back_color((pulse+127)&255, pulse);
-        pulse += 7;
+        pulse += 1;
         printf("   == Select Game ==   \n\n");
         for (int i = 0; i < NbGameMenu; ++i) {
             display_set_front_back_color(i==selected ? 0 : 255, i==selected ? 255 : 0);
@@ -26,19 +26,30 @@ void Game_menu (){
         display_refresh();
 
         if (*BUTTONS & (1<<4)) {
-        ++selected;
+            ++selected;
+            while (*BUTTONS & (1<<4)) {} // Attendre le relâchement
         }
         if (*BUTTONS & (1<<3)) {
-        --selected;
+            --selected;
+            while (*BUTTONS & (1<<3)) {} // Attendre le relâchement
         }
         if (selected < 0) selected = NbGameMenu - 1;
         if (selected >= NbGameMenu) selected = 0;
-        if (*BUTTONS & (1<<5)) {
+
+        if (*BUTTONS & (1<<6)) {
             memset(display_framebuffer(), 0x00, 128*128);
             display_refresh();
             if(selected == 0){
                 F1();
             }
+            // Il n'est pas nécessaire d'attendre ici car F1.c le fait déjà avant de retourner.
+        }
+
+        if (*BUTTONS & (1<<5)) {
+            memset(display_framebuffer(), 0x00, 128*128);
+            display_refresh();
+            while (*BUTTONS & (1<<5)) {} // Attendre le relâchement
+            break;
         }
     }
 }

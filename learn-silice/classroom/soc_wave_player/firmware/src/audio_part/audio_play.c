@@ -62,6 +62,7 @@ void music_play(int selected,char * Album_Path){
             display_refresh();
             display_set_front_back_color(255,0);
             printf("playing "); printf(Songs[selected]); printf("\n");
+            printf("B5 to pause\n B3 to speed up\n B4 to slow down\n B6 to leave");
             display_refresh();
             clear_audio();
             int leds = 0;
@@ -90,6 +91,10 @@ void music_play(int selected,char * Album_Path){
                 
                 else if (buttons & (1<<4)) { if (speed_shift > -2) { speed_shift--; } }
                 
+                else if(buttons & (1<<6 )) {
+                    while (*BUTTONS & (1<<6)) {}
+                    break;
+                }
         
                 uint8_t *addr = (uint8_t*)(*AUDIO);
 
@@ -156,7 +161,8 @@ void music_play(int selected,char * Album_Path){
 }
 
 
-void Select_and_play_Song(char * Album){
+void Select_and_play_Song(char * Album, int *back){
+    *back = 0;
     display_set_cursor(0,0);
     display_set_front_back_color(255,0);
     display_refresh();
@@ -197,14 +203,18 @@ void Select_and_play_Song(char * Album){
 
         if (*BUTTONS & (1<<4)) {
         ++selected;
+        while (*BUTTONS & (1<<4)) {} // Attendre le relâchement
         }
         if (*BUTTONS & (1<<3)) {
         --selected;
+        while (*BUTTONS & (1<<3)) {} // Attendre le relâchement
         }
         if (selected < 0) selected = NSongs - 1;
         if (selected >= NSongs) selected = 0;
         if (*BUTTONS & (1<<5)) {
           memset(display_framebuffer(),0x00,128*128);
+          *back = 1; // Signale qu'il faut retourner au menu principal
+          while (*BUTTONS & (1<<5)) {} // Attendre le relâchement
           display_refresh();
           break;
         }

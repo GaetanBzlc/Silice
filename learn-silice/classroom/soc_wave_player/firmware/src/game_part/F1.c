@@ -37,6 +37,7 @@ static inline void set_px(int x, int y, unsigned char c) {
 }
 
 void draw_circle(int cx, int cy, int r, unsigned char c) {
+  *RGBSEL = 0;
   for(int r_bis = 0;r_bis<r;r_bis++){
     int x = r_bis, y = 0, err = 0;
     while (x >= y) {
@@ -49,6 +50,7 @@ void draw_circle(int cx, int cy, int r, unsigned char c) {
       else { x--; err -= 2*x + 1; }
     }
   }
+  *RGBSEL = 1;
 }
 
 static inline void wait_for_button_release(int mask) {
@@ -123,5 +125,6 @@ void F1(){
   while(1){
     if (*BUTTONS & reaction_button_mask){break;}
   }
+  wait_for_button_release(reaction_button_mask);
   memset(display_framebuffer(), 0x00, 128*128);
 }

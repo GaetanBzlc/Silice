@@ -17,11 +17,13 @@
 int situation;
 #define MAX_STR_ALBUM 64
 char Album[MAX_STR_ALBUM];
-int *back;
+int back_storage; // 1. On déclare une variable pour stocker la valeur
+int *back = &back_storage; // 2. On initialise le pointeur pour qu'il pointe vers cette variable
 
 void main()
 {
-  *back = 0;
+  *RGBSEL = 1;
+  *back = 0; // Maintenant, cette écriture est sans danger
   while(1){
     situation = Init_menu();
 
@@ -29,8 +31,8 @@ void main()
       while(1){
         audio_menu(Album,back);
         if (*back){*back = 0; break;}
-        Select_and_play_Song(Album);
-        if (*back){*back = 0; break;}
+        Select_and_play_Song(Album, back);
+        if (*back){*back = 0; }
       }
     }
     else if (situation == 1){
